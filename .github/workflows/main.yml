@@ -4,24 +4,29 @@ on: workflow_dispatch
 
 jobs:
   build:
-    runs-on: windows-latest
+    # CAMBIO 1: Usamos windows-2019 para tener un compilador GCC más compatible
+    runs-on: windows-2019
     
     steps:
     - name: Descargar Código (desde Oficial)
       uses: actions/checkout@v4
       with:
-        repository: expanse-org/go-expanse  # <--- ESTA LINEA ES LA CLAVE
-        ref: refs/tags/v1.10.1              # Descarga la etiqueta específica
+        repository: expanse-org/go-expanse
+        ref: refs/tags/v1.10.1
         
     - name: Instalar Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.17' # Usamos una versión un poco más antigua para mayor compatibilidad
+        # CAMBIO 2: Usamos 1.18 para mejor soporte de CGO en Windows
+        go-version: '1.18' 
         
     - name: Compilar gexp.exe
+      # Forzamos CGO_ENABLED=1 explícitamente
+      env:
+        CGO_ENABLED: 1
       run: |
         go mod tidy
-        go build -o gexp.exe ./cmd/gexp
+        go build -v -o gexp.exe ./cmd/gexp
         
     - name: Subir Resultado (Artifact)
       uses: actions/upload-artifact@v4
