@@ -1,21 +1,22 @@
 name: Compilar Expanse Windows
 
-on: workflow_dispatch  # Esto permite activar la compilación manualmente con un botón
+on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     
     steps:
-    - name: Descargar Código (v1.10.1)
+    - name: Descargar Código (desde Oficial)
       uses: actions/checkout@v4
       with:
-        ref: refs/tags/v1.10.1  # IMPORTANTE: Aquí seleccionamos la versión exacta
+        repository: expanse-org/go-expanse  # <--- ESTA LINEA ES LA CLAVE
+        ref: refs/tags/v1.10.1              # Descarga la etiqueta específica
         
     - name: Instalar Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.19' # Usamos una versión compatible con la antigüedad del proyecto
+        go-version: '1.17' # Usamos una versión un poco más antigua para mayor compatibilidad
         
     - name: Compilar gexp.exe
       run: |
