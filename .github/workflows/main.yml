@@ -7,27 +7,24 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
+      - name: Checkout scientist1945/go-expanse
+        uses: actions/checkout@v4
+        with:
+          repository: scientist1945/go-expanse
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.19'
 
-      - name: Get GOPATH
-        id: gopath
-        run: |
-          $gopath = go env GOPATH
-          echo "path=$gopath" >> $env:GITHUB_OUTPUT
-
-      - name: Checkout scientist1945/go-expanse
-        uses: actions/checkout@v4
-        with:
-          repository: scientist1945/go-expanse
-          path: ${{ steps.gopath.outputs.path }}/src/github.com/expanse-org/go-expanse
-
       - name: Build gexp.exe
         env:
           GO111MODULE: "off"
         run: |
+          $gopath = go env GOPATH
+          $dest = "$gopath\src\github.com\expanse-org\go-expanse"
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          Copy-Item -Path ".\*" -Destination $dest -Recurse -Force
           go build -v -o gexp.exe github.com/expanse-org/go-expanse/cmd/gexp
 
       - name: Upload executable
