@@ -1,34 +1,45 @@
-name: Build Gexp Windows
+name: Build gexp for Windows
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ master, main ]
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
     steps:
-      - name: Checkout scientist1945/go-expanse
+      - name: Clonar repositorio
         uses: actions/checkout@v4
-        with:
-          repository: scientist1945/go-expanse
 
-      - name: Set up Go
+      - name: Configurar Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.19'
+          go-version: '1.21'
+          cache: false
 
-      - name: Build gexp.exe
-        env:
-          GO111MODULE: "off"
+      - name: Compilar gexp.exe
+        shell: pwsh
         run: |
-          $gopath = go env GOPATH
-          $dest = "$gopath\src\github.com\expanse-org\go-expanse"
-          New-Item -ItemType Directory -Force -Path $dest | Out-Null
-          Copy-Item -Path ".\*" -Destination $dest -Recurse -Force
-          go build -v -o gexp.exe github.com/expanse-org/go-expanse/cmd/gexp
+          $env:GOOS = "windows"
+          $env:GOARCH = "amd64"
+          $env:CGO_ENABLED = "1"
 
-      - name: Upload executable
+          # Compatibilidad tanto con go.mod como con estructura legacy GOPATH
+          if (-not (Test-Path "go.mod")) {
+            $env:GO111MODULE = "off"
+            $gopath = "$env:RUNNER_TEMP\gopath"
+            $dest = "$gopath\src\github.com\expanse-org\go-expanse"
+            New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
+            Copy-Item -Recurse -Force . $dest
+            $env:GOPATH = $gopath
+            Set-Location $dest
+          }
+
+          go build -v -o "$env:GITHUB_WORKSPACE\gexp.exe" ./cmd/gexp
+
+      - name: Subir ejecutable compilado
         uses: actions/upload-artifact@v4
         with:
-          name: gexp-windows
+          name: gexp-windows-amd64
           path: gexp.exe
