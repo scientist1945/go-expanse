@@ -3,10 +3,10 @@ name: Build and Release go-expanse
 on:
   push:
     tags:
-      - 'v*' # Se activa al subir un tag como v1.0.0
+      - 'v*'
 
 permissions:
-  contents: write # Necesario para crear el Release y subir los archivos
+  contents: write
 
 jobs:
   build-and-release:
@@ -15,16 +15,21 @@ jobs:
       - name: Descargar código fuente
         uses: actions/checkout@v4
 
+      - name: Instalar compiladores C/C++ (GCC y MinGW para Windows)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc-mingw-w64-x86-64
+
       - name: Configurar Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22' # Ajusta si tu go.mod requiere otra versión
+          go-version-file: 'go.mod'
 
       - name: Compilar para Linux (amd64)
         env:
           GOOS: linux
           GOARCH: amd64
-          CGO_ENABLED: 0
+          CGO_ENABLED: 1
         run: |
           mkdir -p dist
           go build -ldflags="-s -w" -o dist/gexp-linux-amd64 ./cmd/gexp
@@ -33,7 +38,9 @@ jobs:
         env:
           GOOS: windows
           GOARCH: amd64
-          CGO_ENABLED: 0
+          CGO_ENABLED: 1
+          CC: x86_64-w64-mingw32-gcc
+          CXX: x86_64-w64-mingw32-g++
         run: |
           mkdir -p dist
           go build -ldflags="-s -w" -o dist/gexp-windows-amd64.exe ./cmd/gexp
